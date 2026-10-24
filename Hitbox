@@ -1,0 +1,391 @@
+-- Roblox Hitbox + ESP Script (Cập nhật chỉnh kích thước Hitbox chuẩn xác)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Cấu hình mặc định
+local Settings = {
+    HitboxEnabled = false,
+    HitboxSize = 5,
+    NameEsp = true,
+    LineEsp = false,
+    BoxEsp = false
+}
+
+-- Tạo ScreenGui chính
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HitboxEspGUI_V3"
+ScreenGui.ResetOnSpawn = false
+
+if syn and syn.protect_gui then
+    syn.protect_gui(ScreenGui)
+    ScreenGui.Parent = CoreGui
+elseif gethui then
+    ScreenGui.Parent = gethui()
+else
+    ScreenGui.Parent = CoreGui
+end
+
+-- ---------------------------------------------------------
+-- NÚT TRÒN BẬT/TẮT MENU (FLOATING TOGGLE BUTTON)
+-- ---------------------------------------------------------
+local ToggleMenuBtn = Instance.new("TextButton")
+ToggleMenuBtn.Name = "ToggleMenuBtn"
+ToggleMenuBtn.Size = UDim2.new(0, 45, 0, 45)
+ToggleMenuBtn.Position = UDim2.new(0, 15, 0.4, 0)
+ToggleMenuBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+ToggleMenuBtn.Text = "🎯"
+ToggleMenuBtn.TextSize = 22
+ToggleMenuBtn.Active = true
+ToggleMenuBtn.Draggable = true
+ToggleMenuBtn.Parent = ScreenGui
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(1, 0)
+BtnCorner.Parent = ToggleMenuBtn
+
+local BtnStroke = Instance.new("UIStroke")
+BtnStroke.Color = Color3.fromRGB(255, 255, 255)
+BtnStroke.Thickness = 2
+BtnStroke.Parent = ToggleMenuBtn
+
+-- ---------------------------------------------------------
+-- KHUNG MENU CHÍNH
+-- ---------------------------------------------------------
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 280, 0, 380)
+MainFrame.Position = UDim2.new(0.15, 0, 0.15, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 27, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(46, 204, 113)
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+-- Click nút tròn để Ẩn / Hiện Menu
+ToggleMenuBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, -16, 0, 35)
+Header.Position = UDim2.new(0, 8, 0, 8)
+Header.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 6)
+HeaderCorner.Parent = Header
+
+local HeaderTitle = Instance.new("TextLabel")
+HeaderTitle.Size = UDim2.new(1, 0, 1, 0)
+HeaderTitle.BackgroundTransparency = 1
+HeaderTitle.Text = "🟩 HITBOX + ESP"
+HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+HeaderTitle.TextSize = 15
+HeaderTitle.Font = Enum.Font.SourceSansBold
+HeaderTitle.Parent = Header
+
+-- Content Container
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -16, 1, -55)
+Content.Position = UDim2.new(0, 8, 0, 48)
+Content.BackgroundTransparency = 1
+Content.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = Content
+
+-- Hàm tạo Nút Toggle cho Chức năng
+local function createToggle(text, icon, defaultState, callback)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, 0, 0, 42)
+    Frame.BackgroundColor3 = Color3.fromRGB(35, 37, 42)
+    Frame.Parent = Content
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Frame
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = icon .. " " .. text
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.TextSize = 13
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.SourceSans
+    Label.Parent = Frame
+
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Size = UDim2.new(0, 45, 0, 22)
+    ToggleBtn.Position = UDim2.new(1, -55, 0.5, -11)
+    ToggleBtn.BackgroundColor3 = defaultState and Color3.fromRGB(241, 196, 15) or Color3.fromRGB(60, 64, 72)
+    ToggleBtn.Text = ""
+    ToggleBtn.AutoButtonColor = false
+    ToggleBtn.Parent = Frame
+
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(1, 0)
+    ToggleCorner.Parent = ToggleBtn
+
+    local Circle = Instance.new("Frame")
+    Circle.Size = UDim2.new(0, 18, 0, 18)
+    Circle.Position = defaultState and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+    Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Circle.Parent = ToggleBtn
+
+    local CircleCorner = Instance.new("UICorner")
+    CircleCorner.CornerRadius = UDim.new(1, 0)
+    CircleCorner.Parent = Circle
+
+    local enabled = defaultState
+    ToggleBtn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(241, 196, 15) or Color3.fromRGB(60, 64, 72)
+        Circle.Position = enabled and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+        callback(enabled)
+    end)
+end
+
+-- Hàm tạo Slider (Chỉnh sửa chính xác & nhạy bén hơn)
+local function createSlider(text, min, max, default, callback)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(1, 0, 0, 45)
+    Frame.BackgroundColor3 = Color3.fromRGB(35, 37, 42)
+    Frame.Parent = Content
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Frame
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -20, 0, 20)
+    Label.Position = UDim2.new(0, 10, 0, 2)
+    Label.BackgroundTransparency = 1
+    Label.Text = "✏️ " .. text .. ": " .. tostring(default)
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.TextSize = 13
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.SourceSans
+    Label.Parent = Frame
+
+    local SliderBar = Instance.new("Frame")
+    SliderBar.Size = UDim2.new(1, -20, 0, 6)
+    SliderBar.Position = UDim2.new(0, 10, 0, 28)
+    SliderBar.BackgroundColor3 = Color3.fromRGB(60, 64, 72)
+    SliderBar.Parent = Frame
+
+    local BarCorner = Instance.new("UICorner")
+    BarCorner.CornerRadius = UDim.new(1, 0)
+    BarCorner.Parent = SliderBar
+
+    local Fill = Instance.new("Frame")
+    Fill.Size = UDim2.new(math.clamp((default - min) / (max - min), 0, 1), 0, 1, 0)
+    Fill.BackgroundColor3 = Color3.fromRGB(200, 120, 120)
+    Fill.Parent = SliderBar
+
+    local FillCorner = Instance.new("UICorner")
+    FillCorner.CornerRadius = UDim.new(1, 0)
+    FillCorner.Parent = Fill
+
+    local dragging = false
+
+    local function update(input)
+        local posX = input.Position.X - SliderBar.AbsolutePosition.X
+        local posRatio = math.clamp(posX / SliderBar.AbsoluteSize.X, 0, 1)
+        local value = math.floor(min + (max - min) * posRatio)
+        
+        Fill.Size = UDim2.new(posRatio, 0, 1, 0)
+        Label.Text = "✏️ " .. text .. ": " .. tostring(value)
+        callback(value)
+    end
+
+    SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+end
+
+-- Tạo các mục Toggle & Slider
+createToggle("Bật Hitbox (1-100)", "🎯", Settings.HitboxEnabled, function(val) Settings.HitboxEnabled = val end)
+createSlider("Kích thước", 1, 100, Settings.HitboxSize, function(val) Settings.HitboxSize = val end)
+createToggle("ESP Tên + Khoảng cách", "📜", Settings.NameEsp, function(val) Settings.NameEsp = val end)
+createToggle("ESP Line (Player)", "✏️", Settings.LineEsp, function(val) Settings.LineEsp = val end)
+createToggle("ESP Box (Player)", "🔲", Settings.BoxEsp, function(val) Settings.BoxEsp = val end)
+
+-- Thông báo dưới giao diện
+local InfoFrame = Instance.new("Frame")
+InfoFrame.Size = UDim2.new(1, 0, 0, 45)
+InfoFrame.BackgroundTransparency = 1
+InfoFrame.Parent = Content
+
+local Info1 = Instance.new("TextLabel")
+Info1.Size = UDim2.new(1, 0, 0, 18)
+Info1.BackgroundTransparency = 1
+Info1.Text = "⚙️ ESP chỉ dành cho Người Chơi"
+Info1.TextColor3 = Color3.fromRGB(46, 204, 113)
+Info1.TextSize = 11
+Info1.TextXAlignment = Enum.TextXAlignment.Left
+Info1.Font = Enum.Font.SourceSans
+Info1.Parent = InfoFrame
+
+local Info2 = Instance.new("TextLabel")
+Info2.Size = UDim2.new(1, 0, 0, 18)
+Info2.Position = UDim2.new(0, 0, 0, 18)
+Info2.BackgroundTransparency = 1
+Info2.Text = "⚠️ Hitbox Size > 50 dễ bị kick"
+Info2.TextColor3 = Color3.fromRGB(241, 196, 15)
+Info2.TextSize = 11
+Info2.TextXAlignment = Enum.TextXAlignment.Left
+Info2.Font = Enum.Font.SourceSans
+Info2.Parent = InfoFrame
+
+---------------------------------------------------------
+-- LOGIC HITBOX NGHIÊM NGẶT (STRICT HITBOX)
+---------------------------------------------------------
+
+-- Hàm áp dụng Hitbox tức thì và chính xác
+local function applyHitbox(player)
+    if player ~= LocalPlayer and player.Character then
+        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            if Settings.HitboxEnabled then
+                hrp.Size = Vector3.new(Settings.HitboxSize, Settings.HitboxSize, Settings.HitboxSize)
+                hrp.Transparency = 0.7
+                hrp.BrickColor = BrickColor.new("Really red")
+                hrp.Material = Enum.Material.Neon
+                hrp.CanCollide = false
+            else
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+            end
+        end
+    end
+end
+
+-- Vòng lặp cập nhật liên tục mỗi khung hình (RenderStepped)
+RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        applyHitbox(player)
+    end
+end)
+
+---------------------------------------------------------
+-- LOGIC ESP
+---------------------------------------------------------
+local EspDrawings = {}
+
+local function createEspForPlayer(player)
+    local drawing = {
+        Line = Drawing.new("Line"),
+        Box = Drawing.new("Square"),
+        Text = Drawing.new("Text")
+    }
+
+    drawing.Line.Color = Color3.fromRGB(255, 255, 255)
+    drawing.Line.Thickness = 1.5
+
+    drawing.Box.Color = Color3.fromRGB(255, 0, 0)
+    drawing.Box.Thickness = 1.5
+    drawing.Box.Filled = false
+
+    drawing.Text.Color = Color3.fromRGB(255, 255, 255)
+    drawing.Text.Size = 14
+    drawing.Text.Center = true
+    drawing.Text.Outline = true
+
+    EspDrawings[player] = drawing
+end
+
+local function removeEsp(player)
+    if EspDrawings[player] then
+        EspDrawings[player].Line:Remove()
+        EspDrawings[player].Box:Remove()
+        EspDrawings[player].Text:Remove()
+        EspDrawings[player] = nil
+    end
+end
+
+Players.PlayerAdded:Connect(createEspForPlayer)
+Players.PlayerRemoving:Connect(removeEsp)
+
+for _, p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then createEspForPlayer(p) end
+end
+
+RunService.RenderStepped:Connect(function()
+    for player, drawing in pairs(EspDrawings) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            local hrp = player.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+            if onScreen then
+                if Settings.NameEsp then
+                    local dist = math.floor((LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude) or 0)
+                    drawing.Text.Text = player.Name .. " [" .. tostring(dist) .. "m]"
+                    drawing.Text.Position = Vector2.new(pos.X, pos.Y - 40)
+                    drawing.Text.Visible = true
+                else
+                    drawing.Text.Visible = false
+                end
+
+                if Settings.LineEsp then
+                    drawing.Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    drawing.Line.To = Vector2.new(pos.X, pos.Y)
+                    drawing.Line.Visible = true
+                else
+                    drawing.Line.Visible = false
+                end
+
+                if Settings.BoxEsp then
+                    local sizeY = (Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0)).Y - Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3.5, 0)).Y)
+                    local sizeX = sizeY / 1.5
+                    drawing.Box.Size = Vector2.new(math.abs(sizeX), math.abs(sizeY))
+                    drawing.Box.Position = Vector2.new(pos.X - math.abs(sizeX) / 2, pos.Y - math.abs(sizeY) / 2)
+                    drawing.Box.Visible = true
+                else
+                    drawing.Box.Visible = false
+                end
+            else
+                drawing.Text.Visible = false
+                drawing.Line.Visible = false
+                drawing.Box.Visible = false
+            end
+        else
+            drawing.Text.Visible = false
+            drawing.Line.Visible = false
+            drawing.Box.Visible = false
+        end
+    end
+end)
